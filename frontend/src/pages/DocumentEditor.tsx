@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -28,6 +28,8 @@ export default function DocumentEditor() {
   const [isStarred, setIsStarred] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyVersions, setHistoryVersions] = useState<any[]>([]);
+  const isDirtyRef = useRef(false);
+  const editorRef = useRef<any>(null);
   const currentUser = useAuthStore((state) => state.user);
   const navigate = useNavigate();
 
@@ -107,6 +109,12 @@ export default function DocumentEditor() {
     });
 
     return () => {
+      if (isDirtyRef.current && editorRef.current) {
+        newSocket.emit("save-snapshot", {
+          documentId,
+          content: editorRef.current.getHTML(),
+        });
+      }
       newSocket.emit("leave-document", documentId);
       newSocket.disconnect();
     };
@@ -118,6 +126,7 @@ export default function DocumentEditor() {
 
     const handleYjsUpdate = (update: Uint8Array, origin: any) => {
       if (origin !== socket) {
+        isDirtyRef.current = true; // Mark as modified locally
         socket.emit("yjs-update", {
           documentId,
           update: Array.from(update),
@@ -149,6 +158,24 @@ export default function DocumentEditor() {
     },
     // We don't use onUpdate here to broadcast HTML anymore. Yjs handles it natively.
   });
+
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
+
+  // Handle tab close for snapshots
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isDirtyRef.current && socket && editorRef.current) {
+        socket.emit("save-snapshot", {
+          documentId,
+          content: editorRef.current.getHTML(),
+        });
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [socket, documentId]);
 
   useEffect(() => {
     if (editor && initialContent !== null) {
@@ -232,7 +259,8 @@ export default function DocumentEditor() {
     if (window.confirm("Restore this version? This will overwrite the current document for everyone.")) {
       editor.commands.setContent(version.contentSnapshot);
       setHistoryOpen(false);
-      handleSave(); // Automatically save the restored version
+      isDirtyRef.current = true; // Force snapshot on next close since we changed the document
+      handleSave(); // Automatically save the restored version main content
     }
   };
 

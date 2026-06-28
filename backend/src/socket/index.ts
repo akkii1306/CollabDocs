@@ -96,17 +96,26 @@ export default function setupSocket(io: Server) {
       });
     });
 
-    // Autosave document content (manual save from frontend triggers this)
+    // Autosave document content (normal save without snapshot)
     socket.on("save-document", async (data: { documentId: string; content: string }) => {
       try {
         await documentService.updateDocument(data.documentId, user.id, { content: data.content });
-        // Save a version snapshot
-        await documentService.saveVersion(data.documentId, user.id, data.content);
-        
         socket.emit("save-success", { documentId: data.documentId, timestamp: new Date() });
       } catch (error) {
         logger.error(`Error saving document ${data.documentId}:`, error);
         socket.emit("save-error", { documentId: data.documentId, error: "Failed to save document" });
+      }
+    });
+
+    // Save document and create a history snapshot (triggered on close)
+    socket.on("save-snapshot", async (data: { documentId: string; content: string }) => {
+      try {
+        await documentService.updateDocument(data.documentId, user.id, { content: data.content });
+        await documentService.saveVersion(data.documentId, user.id, data.content);
+        socket.emit("save-success", { documentId: data.documentId, timestamp: new Date() });
+      } catch (error) {
+        logger.error(`Error saving snapshot for document ${data.documentId}:`, error);
+        socket.emit("save-error", { documentId: data.documentId, error: "Failed to save snapshot" });
       }
     });
 
