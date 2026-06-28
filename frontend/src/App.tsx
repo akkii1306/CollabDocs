@@ -37,7 +37,7 @@ export default function App() {
           <Route path="/dashboard/workspace/:workspaceId" element={<Dashboard />} />
         </Route>
 
-        <Route element={<ProtectedRoute><DashboardLayout isEditor={true} /></ProtectedRoute>}>
+        <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route path="/document/:documentId" element={<DocumentEditor />} />
         </Route>
 

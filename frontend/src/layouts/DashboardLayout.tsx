@@ -1,10 +1,11 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/auth.store";
 import { Button } from "@/components/ui/button";
-import { LogOut, Home, User as UserIcon } from "lucide-react";
+import { LogOut, Home, User as UserIcon, Sparkles } from "lucide-react";
 import api from "../lib/api";
+import { motion } from "framer-motion";
 
-export default function DashboardLayout({ isEditor = false }: { isEditor?: boolean }) {
+export default function DashboardLayout() {
   const { user, logout, refreshToken } = useAuthStore();
   const navigate = useNavigate();
 
@@ -20,37 +21,47 @@ export default function DashboardLayout({ isEditor = false }: { isEditor?: boole
   };
 
   return (
-    <div className="flex h-screen flex-col bg-background">
-      <header className="flex items-center justify-between px-6 py-3 border-b shadow-sm">
+    <div className="flex h-screen flex-col bg-background relative overflow-hidden">
+      {/* Subtle Background Gradients */}
+      <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/10 blur-[120px] pointer-events-none" />
+
+      <motion.header 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="flex items-center justify-between px-6 py-3 border-b border-white/5 glass z-10"
+      >
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="hover:bg-primary/20 text-primary transition-colors">
             <Home className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-bold cursor-pointer" onClick={() => navigate("/dashboard")}>
-            CollabDocs
-          </h1>
+          <div 
+            className="flex items-center gap-2 cursor-pointer group" 
+            onClick={() => navigate("/dashboard")}
+          >
+            <Sparkles className="h-5 w-5 text-primary group-hover:text-purple-400 transition-colors" />
+            <h1 className="text-xl font-bold text-gradient tracking-tight">
+              CollabDocs
+            </h1>
+          </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary/10 p-2 rounded-full">
-              <UserIcon className="h-4 w-4 text-primary" />
+          <div className="flex items-center gap-3 bg-secondary/50 px-3 py-1.5 rounded-full border border-white/5">
+            <div className="bg-gradient-to-br from-primary to-purple-600 p-1.5 rounded-full shadow-lg shadow-primary/20">
+              <UserIcon className="h-4 w-4 text-white" />
             </div>
-            <span className="text-sm font-medium">{user?.name}</span>
+            <span className="text-sm font-medium mr-2">{user?.name}</span>
           </div>
-          <Button variant="outline" size="sm" onClick={handleLogout}>
+          <Button variant="outline" size="sm" onClick={handleLogout} className="border-white/10 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all">
             <LogOut className="h-4 w-4 mr-2" />
             Logout
           </Button>
         </div>
-      </header>
+      </motion.header>
 
-      <div className="flex-1 overflow-hidden flex">
-        {!isEditor && (
-          <aside className="w-64 border-r bg-muted/20 hidden md:block">
-            {/* Sidebar content will go here (Workspace switcher etc) */}
-          </aside>
-        )}
-        <main className="flex-1 overflow-auto">
+      <div className="flex-1 flex overflow-hidden z-10 relative">
+        <main className="flex-1 overflow-auto bg-background/40">
           <Outlet />
         </main>
       </div>

@@ -9,8 +9,9 @@ import api from "../lib/api";
 import { io, Socket } from "socket.io-client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Save, History, Edit2, Trash2, Star, Clock } from "lucide-react";
+import { Save, History, Edit2, Trash2, Star, Clock, ChevronLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { motion } from "framer-motion";
 
 export default function DocumentEditor() {
   const { documentId } = useParams();
@@ -269,22 +270,39 @@ export default function DocumentEditor() {
   if (!editor) return <div>Loading editor...</div>;
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="border-b p-4 flex items-center justify-between bg-background z-10 sticky top-0">
+    <div className="flex flex-col h-full bg-background relative overflow-hidden">
+      {/* Subtle Background Gradients */}
+      <div className="absolute top-[10%] right-[10%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[100px] pointer-events-none z-0" />
+
+      <motion.div 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="m-4 mb-0 rounded-2xl glass border-white/10 p-4 flex items-center justify-between z-10 shadow-lg"
+      >
         <div className="flex items-center gap-4">
           <Button 
             variant="ghost" 
             size="icon" 
+            onClick={() => navigate("/dashboard")}
+            className="hover:bg-primary/20 text-muted-foreground hover:text-primary transition-colors"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+
+          <Button 
+            variant="ghost" 
+            size="icon" 
             onClick={handleToggleStar}
-            className={`h-8 w-8 ${isStarred ? "text-yellow-500 hover:text-yellow-600" : "text-muted-foreground"}`}
+            className={`h-8 w-8 ${isStarred ? "text-yellow-500 hover:text-yellow-600 bg-yellow-500/10" : "text-muted-foreground hover:bg-white/10"}`}
           >
             <Star className={`h-5 w-5 ${isStarred ? "fill-yellow-500" : ""}`} />
           </Button>
+          
           {isEditingTitle ? (
             <Input 
               value={tempTitle} 
               onChange={(e) => setTempTitle(e.target.value)} 
-              className="h-8 w-64 text-xl font-bold"
+              className="h-8 w-64 text-xl font-bold bg-background/50 border-white/10 focus:border-primary"
               autoFocus
               onBlur={handleTitleUpdate}
               onKeyDown={(e) => {
@@ -297,7 +315,7 @@ export default function DocumentEditor() {
             />
           ) : (
             <h2 
-              className={`text-xl font-bold flex items-center gap-2 ${userRole !== "VIEWER" ? "cursor-pointer hover:text-muted-foreground transition-colors" : ""}`}
+              className={`text-xl font-bold flex items-center gap-2 tracking-tight ${userRole !== "VIEWER" ? "cursor-pointer hover:text-primary transition-colors" : ""}`}
               onClick={() => {
                 if (userRole !== "VIEWER") setIsEditingTitle(true);
               }}
@@ -307,18 +325,19 @@ export default function DocumentEditor() {
               {userRole !== "VIEWER" && <Edit2 className="h-4 w-4 opacity-50" />}
             </h2>
           )}
-          <div className="flex -space-x-2">
+          
+          <div className="flex -space-x-2 ml-4">
             {/* Active Users Avatars */}
             {activeUsers.map((u, i) => (
-              <div key={i} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground border-2 border-background text-xs" title={`User ${u.userId}`}>
+              <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-primary-foreground border-2 border-background shadow-sm text-xs font-semibold" title={`User ${u.userId}`}>
                 U
               </div>
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {canDelete && (
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
+            <Button variant="destructive" size="sm" onClick={handleDelete} className="bg-destructive/80 hover:bg-destructive shadow-md">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </Button>
@@ -329,29 +348,31 @@ export default function DocumentEditor() {
             if (open) fetchHistory();
           }}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="glass hover:bg-white/10 border-white/10">
                 <History className="h-4 w-4 mr-2" />
                 History
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-h-[80vh] overflow-y-auto glass-card border-white/10 sm:max-w-xl">
               <DialogHeader>
-                <DialogTitle>Version History</DialogTitle>
+                <DialogTitle className="text-2xl font-bold">Version History</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 {historyVersions.length === 0 ? (
-                  <div className="text-center text-muted-foreground p-4">No saved versions yet. Click 'Save' to create a snapshot.</div>
+                  <div className="text-center text-muted-foreground p-8 bg-background/30 rounded-xl border border-white/5 border-dashed">
+                    No saved versions yet. Navigating away will create a snapshot automatically if changes were made.
+                  </div>
                 ) : (
                   historyVersions.map((v) => (
-                    <div key={v.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-3 border rounded-md gap-3">
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={v.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border border-white/5 bg-background/30 hover:bg-background/50 rounded-xl gap-3 transition-colors">
                       <div>
                         <div className="font-semibold text-sm">{new Date(v.createdAt).toLocaleString()}</div>
-                        <div className="text-xs text-muted-foreground mt-1">Snapshot</div>
+                        <div className="text-xs text-primary mt-1">Automatic Snapshot</div>
                       </div>
-                      <Button variant="secondary" size="sm" onClick={() => restoreVersion(v)} disabled={userRole === "VIEWER"}>
+                      <Button variant="secondary" size="sm" className="bg-primary/20 hover:bg-primary/30 text-primary border-0" onClick={() => restoreVersion(v)} disabled={userRole === "VIEWER"}>
                         <Clock className="h-4 w-4 mr-2" /> Restore
                       </Button>
-                    </div>
+                    </motion.div>
                   ))
                 )}
               </div>
@@ -359,18 +380,23 @@ export default function DocumentEditor() {
           </Dialog>
 
           {userRole !== "VIEWER" && (
-            <Button size="sm" onClick={handleSave} disabled={saving}>
+            <Button size="sm" onClick={handleSave} disabled={saving} className="bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 shadow-lg shadow-primary/20">
               <Save className="h-4 w-4 mr-2" />
               {saving ? "Saving..." : "Save"}
             </Button>
           )}
         </div>
-      </div>
+      </motion.div>
       
-      <div className="flex-1 overflow-auto bg-muted/30 p-8">
-        <div className="max-w-4xl mx-auto bg-background border shadow-sm min-h-full p-12">
-          <EditorContent editor={editor} className="prose prose-stone dark:prose-invert max-w-none min-h-[500px] outline-none" />
-        </div>
+      <div className="flex-1 overflow-auto p-4 z-10 flex justify-center pb-24 relative">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="w-full max-w-4xl bg-card border border-white/5 shadow-2xl rounded-lg min-h-full p-12 mt-4 relative z-10"
+        >
+          <EditorContent editor={editor} className="prose prose-stone dark:prose-invert max-w-none min-h-[700px] outline-none" />
+        </motion.div>
       </div>
     </div>
   );

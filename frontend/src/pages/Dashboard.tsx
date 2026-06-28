@@ -7,6 +7,7 @@ import { FileText, Plus, Folder, Star } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { motion } from "framer-motion";
 
 interface Workspace {
   id: string;
@@ -121,41 +122,45 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-6 h-full flex flex-col gap-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-8 h-full flex flex-col gap-8 max-w-7xl mx-auto">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <div className="space-y-1">
+          <h2 className="text-4xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">Manage your workspaces and documents.</p>
+        </div>
         
         <Dialog open={wsDialogOpen} onOpenChange={setWsDialogOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" /> New Workspace</Button>
+            <Button className="bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 shadow-lg shadow-primary/20"><Plus className="h-4 w-4 mr-2" /> New Workspace</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="glass-card sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Create a Workspace</DialogTitle>
+              <DialogTitle className="text-2xl font-bold">Create Workspace</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="ws-name">Name</Label>
-                <Input id="ws-name" value={newWorkspaceName} onChange={(e) => setNewWorkspaceName(e.target.value)} />
+                <Input id="ws-name" value={newWorkspaceName} onChange={(e) => setNewWorkspaceName(e.target.value)} placeholder="Engineering Team" className="bg-background/50 border-white/10 focus:border-primary transition-colors" />
               </div>
-              <Button onClick={handleCreateWorkspace}>Create</Button>
+              <Button onClick={handleCreateWorkspace} className="w-full bg-gradient-to-r from-primary to-purple-600">Create</Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="md:col-span-1 flex flex-col gap-2">
-          <h3 className="font-semibold text-lg flex items-center gap-2"><Folder className="h-5 w-5"/> Workspaces</h3>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="md:col-span-1 flex flex-col gap-3">
+          <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-2"><Folder className="h-4 w-4"/> Workspaces</h3>
           {workspaces.map((ws) => (
-            <Button 
+            <motion.button 
+              whileHover={{ x: 4 }}
               key={ws.id} 
-              variant={ws.id === workspaceId ? "secondary" : "ghost"} 
-              className="justify-start"
+              className={`flex items-center text-left px-4 py-3 rounded-xl transition-all ${ws.id === workspaceId ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm' : 'hover:bg-secondary/50 text-muted-foreground hover:text-foreground'}`}
               onClick={() => navigate(`/dashboard/workspace/${ws.id}`)}
             >
-              {ws.name}
-            </Button>
+              <div className={`w-2 h-2 rounded-full mr-3 ${ws.id === workspaceId ? 'bg-primary' : 'bg-transparent'}`} />
+              <span className="font-medium">{ws.name}</span>
+            </motion.button>
           ))}
         </div>
         
@@ -204,18 +209,18 @@ export default function Dashboard() {
 
                   <Dialog open={docDialogOpen} onOpenChange={setDocDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button><Plus className="h-4 w-4 mr-2" /> New Document</Button>
+                      <Button className="bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 shadow-lg shadow-primary/20"><Plus className="h-4 w-4 mr-2" /> New Document</Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="glass-card sm:max-w-md">
                       <DialogHeader>
-                        <DialogTitle>Create a Document</DialogTitle>
+                        <DialogTitle className="text-2xl font-bold">Create Document</DialogTitle>
                       </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
                         <Label htmlFor="doc-title">Title</Label>
-                        <Input id="doc-title" value={newDocTitle} onChange={(e) => setNewDocTitle(e.target.value)} />
+                        <Input id="doc-title" value={newDocTitle} onChange={(e) => setNewDocTitle(e.target.value)} placeholder="Project Proposal" className="bg-background/50 border-white/10 focus:border-primary transition-colors"/>
                       </div>
-                      <Button onClick={handleCreateDocument}>Create</Button>
+                      <Button onClick={handleCreateDocument} className="w-full bg-gradient-to-r from-primary to-purple-600">Create</Button>
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -223,37 +228,51 @@ export default function Dashboard() {
               </div>
 
               {loading ? (
-                <div>Loading documents...</div>
+                <div className="flex justify-center py-12"><div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>
               ) : documents.length === 0 ? (
-                <div className="text-center p-12 border rounded-lg border-dashed text-muted-foreground">
-                  No documents found in this workspace. Create one!
-                </div>
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center p-12 glass-card rounded-2xl border-dashed border-2 border-white/10 text-muted-foreground gap-4">
+                  <FileText className="h-12 w-12 text-muted-foreground/30" />
+                  <p>No documents found in this workspace. Create one!</p>
+                </motion.div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <motion.div 
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    hidden: { opacity: 0 },
+                    visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+                  }}
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                >
                   {documents.map((doc) => (
-                    <Card key={doc.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate(`/document/${doc.id}`)}>
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-lg flex justify-between items-center">
-                          <span className="truncate">{doc.title}</span>
-                          {doc.isStarred && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0">
-                        <div className="flex justify-center p-4 bg-muted/30 rounded-md">
-                          <FileText className="h-12 w-12 text-muted-foreground/50" />
-                        </div>
-                      </CardContent>
-                      <CardFooter className="p-4 pt-0 text-xs text-muted-foreground">
-                        Updated {new Date(doc.updatedAt).toLocaleDateString()}
-                      </CardFooter>
-                    </Card>
+                    <motion.div key={doc.id} variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}>
+                      <Card 
+                        className="cursor-pointer glass border-white/5 hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 h-full flex flex-col" 
+                        onClick={() => navigate(`/document/${doc.id}`)}
+                      >
+                        <CardHeader className="p-5 pb-2">
+                          <CardTitle className="text-lg flex justify-between items-center font-semibold">
+                            <span className="truncate">{doc.title}</span>
+                            {doc.isStarred && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-5 flex-1">
+                          <div className="flex justify-center p-6 bg-secondary/30 rounded-xl group transition-colors">
+                            <FileText className="h-14 w-14 text-muted-foreground/30 group-hover:text-primary/50 transition-colors" />
+                          </div>
+                        </CardContent>
+                        <CardFooter className="p-5 pt-0 text-xs text-muted-foreground flex items-center justify-between">
+                          <span>Updated {new Date(doc.updatedAt).toLocaleDateString()}</span>
+                        </CardFooter>
+                      </Card>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               )}
             </>
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
